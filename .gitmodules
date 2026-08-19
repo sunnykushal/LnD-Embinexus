@@ -1,0 +1,3 @@
+[submodule "learning-ai-api"]
+	path = learning-ai-api
+	url = https://github.com/parthasarathyhmh/learning-ai-api.git
