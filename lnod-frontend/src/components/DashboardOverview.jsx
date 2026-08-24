@@ -71,7 +71,7 @@ export default function DashboardOverview({
 
         {error && (
           <div className="error-banner">
-            Couldn't load your projects: {error}
+            Couldn't load your Published Courses: {error}
           </div>
         )}
 
@@ -86,14 +86,14 @@ export default function DashboardOverview({
         </div>
 
         <div className="section-heading">
-          <p className="section-title">Recent projects</p>
+          <p className="section-title">Recent Published Courses</p>
         </div>
 
         {loading && <p className="page-subtitle">Loading…</p>}
 
         {!loading && recent.length === 0 && (
           <div className="state-block">
-            <p className="state-block-title">No projects yet</p>
+            <p className="state-block-title">No Published Courses yet</p>
             <p>Your generated courses will show up here.</p>
           </div>
         )}
@@ -118,25 +118,25 @@ export default function DashboardOverview({
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">My projects</h1>
+        <h1 className="page-title">Published Courses</h1>
         <p className="page-subtitle">
           Everything you've generated from text, PDF, or audio sources.
         </p>
       </div>
 
       {error && (
-        <div className="error-banner">Couldn't load your projects: {error}</div>
+        <div className="error-banner">Couldn't load your Published Courses: {error}</div>
       )}
 
       {loading && (
         <div className="state-block">
-          <p>Loading projects…</p>
+          <p>Loading Published Courses…</p>
         </div>
       )}
 
       {!loading && !error && courses.length === 0 && (
         <div className="state-block">
-          <p className="state-block-title">No projects yet</p>
+          <p className="state-block-title">No Published Courses yet</p>
           <p>
             Create your first course from a text passage, a PDF, or an audio
             file.
