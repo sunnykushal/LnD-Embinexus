@@ -545,3 +545,63 @@
   color: var(--ink-soft);
   font-size: 13px;
 }
+
+/* ---------- Course modules (CourseView) ---------- */
+
+.module-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-top: 16px;
+}
+
+.module-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.module-card-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.module-card-summary {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.module-card-section {
+  margin-bottom: 16px;
+}
+
+.module-card-section ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.knowledge-check {
+  background: var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.knowledge-check-question {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.knowledge-check-answer {
+  margin: 0;
+  color: var(--ink-soft);
+}

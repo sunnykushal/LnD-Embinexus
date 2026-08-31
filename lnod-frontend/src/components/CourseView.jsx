@@ -1,119 +1,179 @@
 import { useState } from "react";
+import { fetchCourseById, approveModule, approveCourse } from "../api/coursesApi";
 
-export default function CourseView({ course }) {
-  const [quizScores, setQuizScores] = useState({});
+const STATUS_LABELS = {
+  DRAFT: "Draft",
+  PROCESSING: "Processing",
+  READY_FOR_REVIEW: "Ready for review",
+  APPROVED: "Approved",
+  FAILED: "Failed",
+  REVIEW: "Needs review",
+};
 
-  const handleSelectOption = (questionIndex, selectedOption) => {
-    const isCorrect = selectedOption.startsWith(
-      course.quiz[questionIndex].correct_answer,
-    );
-    setQuizScores({
-      ...quizScores,
-      [questionIndex]: isCorrect ? "correct" : "incorrect",
-    });
-  };
+function statusClass(status) {
+  return `stamp stamp-${(status || "draft").toLowerCase()}`;
+}
+
+function formatAudience(audience) {
+  if (!audience) return "";
+  return audience.charAt(0) + audience.slice(1).toLowerCase();
+}
+
+export default function CourseView({ course: initialCourse, onBack }) {
+  const [course, setCourse] = useState(initialCourse);
+  const [error, setError] = useState(null);
+  const [busyModuleId, setBusyModuleId] = useState(null);
+  const [busyCourse, setBusyCourse] = useState(false);
+
+  const modules = [...(course.modules || [])].sort(
+    (a, b) => (a.order ?? 0) - (b.order ?? 0)
+  );
+
+  const allModulesApproved =
+    modules.length > 0 && modules.every((m) => m.status === "APPROVED");
+
+  async function refresh() {
+    try {
+      const fresh = await fetchCourseById(course._id);
+      setCourse(fresh);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleApproveModule(moduleId) {
+    setError(null);
+    setBusyModuleId(moduleId);
+    try {
+      await approveModule(course._id, moduleId);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyModuleId(null);
+    }
+  }
+
+  async function handleApproveCourse() {
+    setError(null);
+    setBusyCourse(true);
+    try {
+      await approveCourse(course._id);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyCourse(false);
+    }
+  }
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-10 animate-fade-in">
-      {/* HEADER SECTION */}
-      <header className="border-b border-slate-100 pb-6 flex justify-between items-start">
-        <div>
-          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            Review-Ready Module
-          </span>
-          <h1 className="text-3xl font-black text-slate-900 mt-3">
-            {course.title}
-          </h1>
-        </div>
-        <button
-          onClick={() => window.print()}
-          className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-lg border border-slate-200 transition"
-        >
-          🖨️ Export (PDF)
-        </button>
-      </header>
+    <div>
+      <button className="back-link" onClick={onBack}>
+        ← Back to projects
+      </button>
 
-      {/* LEARNING OBJECTIVES */}
-      <section className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-        <h2 className="text-lg font-bold text-blue-900 mb-3 flex items-center space-x-2">
-          <span>🎯</span>
-          <span>Learning Objectives</span>
-        </h2>
-        <ul className="list-disc list-inside space-y-2 text-blue-800 font-medium text-sm">
-          {course.learning_objectives?.map((obj, i) => (
-            <li key={i}>{obj}</li>
-          ))}
-        </ul>
-      </section>
+      {error && <div className="error-banner">{error}</div>}
 
-      {/* CORE CURRICULUM CONCEPTS */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center space-x-2">
-          <span>📖</span>
-          <span>Core Concepts</span>
-        </h2>
-        <div className="grid grid-cols-1 gap-6">
-          {course.core_concepts?.map((concept, i) => (
-            <div
-              key={i}
-              className="border border-slate-100 p-6 rounded-xl space-y-3 bg-slate-50/50 hover:bg-slate-50 transition"
+      <div className="detail-card">
+        <div className="detail-header">
+          <div>
+            <span className={statusClass(course.status)}>
+              {STATUS_LABELS[course.status] || course.status}
+            </span>
+            <h1 className="detail-title">{course.courseTitle}</h1>
+            <p className="detail-subtitle">
+              {formatAudience(course.targetAudience)} audience
+            </p>
+          </div>
+
+          {course.status !== "APPROVED" && (
+            <button
+              className="btn-primary"
+              onClick={handleApproveCourse}
+              disabled={!allModulesApproved || busyCourse}
+              title={
+                !allModulesApproved
+                  ? "Approve every module before publishing the course"
+                  : ""
+              }
             >
-              <h3 className="text-lg font-bold text-slate-800">
-                {concept.concept_name}
-              </h3>
-              <p className="text-slate-600 leading-relaxed text-sm">
-                {concept.explanation}
-              </p>
-              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg text-sm text-amber-950">
-                <strong>💡 Real-World Analogy:</strong>{" "}
-                {concept.real_world_example}
-              </div>
+              {busyCourse ? "Publishing…" : "Approve & publish course"}
+            </button>
+          )}
+        </div>
+
+        {course.learningObjectives?.length > 0 && (
+          <div className="detail-row">
+            <div>
+              <p className="detail-field-label">Learning objectives</p>
+              <ul className="detail-field-value">
+                {course.learningObjectives.map((obj, i) => (
+                  <li key={i}>{obj}</li>
+                ))}
+              </ul>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        )}
 
-      {/* INTERACTIVE QUIZ SECTION */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center space-x-2">
-          <span>🧩</span>
-          <span>Interactive Knowledge Check</span>
-        </h2>
-        <div className="space-y-6">
-          {course.quiz?.map((q, qIdx) => (
-            <div
-              key={qIdx}
-              className="bg-slate-50 border border-slate-200 p-6 rounded-xl space-y-4"
-            >
-              <div className="flex justify-between items-center">
-                <p className="font-bold text-slate-800">
-                  {qIdx + 1}. {q.question}
-                </p>
-                {quizScores[qIdx] && (
-                  <span
-                    className={`text-xs font-bold uppercase px-2 py-1 rounded ${quizScores[qIdx] === "correct" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}
-                  >
-                    {quizScores[qIdx] === "correct"
-                      ? "🎉 Correct!"
-                      : "❌ Try Again"}
-                  </span>
-                )}
+        {modules.length === 0 && (
+          <div className="modules-empty">
+            {course.status === "PROCESSING"
+              ? "This course is still being generated — modules will appear here once ready."
+              : "No modules yet."}
+          </div>
+        )}
+
+        {modules.map((module) => (
+          <div className="module-card" key={module._id}>
+            <div className="module-card-header">
+              <h3 className="module-card-title">
+                {module.order}. {module.title}
+              </h3>
+              <span className={statusClass(module.status)}>
+                {STATUS_LABELS[module.status] || module.status}
+              </span>
+            </div>
+
+            {module.summary && (
+              <p className="module-card-summary">{module.summary}</p>
+            )}
+
+            {module.examples?.length > 0 && (
+              <div className="module-card-section">
+                <p className="detail-field-label">Examples</p>
+                <ul>
+                  {module.examples.map((ex, i) => (
+                    <li key={i}>{ex}</li>
+                  ))}
+                </ul>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {q.options?.map((opt, optIndex) => (
-                  <button
-                    key={optIndex}
-                    onClick={() => handleSelectOption(qIdx, opt)}
-                    className="p-3 bg-white border border-slate-200 rounded-lg text-left hover:bg-blue-50 hover:border-blue-300 transition text-sm text-slate-700 font-medium shadow-sm"
-                  >
-                    {opt}
-                  </button>
+            )}
+
+            {module.knowledgeChecks?.length > 0 && (
+              <div className="module-card-section">
+                <p className="detail-field-label">Knowledge check</p>
+                {module.knowledgeChecks.map((qa, i) => (
+                  <div key={i} className="knowledge-check">
+                    <p className="knowledge-check-question">Q: {qa.question}</p>
+                    <p className="knowledge-check-answer">A: {qa.answer}</p>
+                  </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            )}
+
+            {module.status !== "APPROVED" && (
+              <button
+                className="btn-secondary"
+                onClick={() => handleApproveModule(module._id)}
+                disabled={busyModuleId === module._id}
+              >
+                {busyModuleId === module._id ? "Approving…" : "Approve module"}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
