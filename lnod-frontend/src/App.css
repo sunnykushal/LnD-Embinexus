@@ -605,3 +605,168 @@
   margin: 0;
   color: var(--ink-soft);
 }
+
+/* ---------- AI Processing / Course Generated screens ---------- */
+
+.progress-card {
+  max-width: 480px;
+  margin: 40px auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: left;
+}
+
+.progress-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px;
+}
+
+.progress-steps {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.progress-step.is-done {
+  color: var(--ink);
+}
+
+.progress-step.is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.progress-step-marker {
+  width: 18px;
+  display: inline-block;
+  text-align: center;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #4f7cff;
+  transition: width 0.4s ease;
+}
+
+.progress-percent {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+.progress-hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.generated-course-title {
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 0 0 20px;
+}
+
+.generated-stats {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.generated-stats strong {
+  font-size: 18px;
+  display: block;
+}
+
+/* ---------- Course editor 2-pane layout ---------- */
+
+.course-editor-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.module-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid var(--line);
+  padding-right: 16px;
+}
+
+.module-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.module-nav-item:hover {
+  background: var(--line);
+}
+
+.module-nav-item.is-active {
+  background: var(--line);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.module-nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.is-approved {
+  background: #2ecc71;
+}
+
+.status-dot.is-review {
+  background: #f5b942;
+}
+
+.module-card-selected {
+  margin-top: 0;
+}

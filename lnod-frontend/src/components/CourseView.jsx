@@ -14,6 +14,10 @@ function statusClass(status) {
   return `stamp stamp-${(status || "draft").toLowerCase()}`;
 }
 
+function dotClass(status) {
+  return status === "APPROVED" ? "status-dot is-approved" : "status-dot is-review";
+}
+
 function formatAudience(audience) {
   if (!audience) return "";
   return audience.charAt(0) + audience.slice(1).toLowerCase();
@@ -28,6 +32,13 @@ export default function CourseView({ course: initialCourse, onBack }) {
   const modules = [...(course.modules || [])].sort(
     (a, b) => (a.order ?? 0) - (b.order ?? 0)
   );
+
+  const [selectedModuleId, setSelectedModuleId] = useState(
+    modules[0]?._id ?? null
+  );
+
+  const selectedModule =
+    modules.find((m) => m._id === selectedModuleId) || modules[0] || null;
 
   const allModulesApproved =
     modules.length > 0 && modules.every((m) => m.status === "APPROVED");
@@ -124,55 +135,80 @@ export default function CourseView({ course: initialCourse, onBack }) {
           </div>
         )}
 
-        {modules.map((module) => (
-          <div className="module-card" key={module._id}>
-            <div className="module-card-header">
-              <h3 className="module-card-title">
-                {module.order}. {module.title}
-              </h3>
-              <span className={statusClass(module.status)}>
-                {STATUS_LABELS[module.status] || module.status}
-              </span>
-            </div>
+        {modules.length > 0 && (
+          <div className="course-editor-layout">
+            {/* Left: module list nav */}
+            <nav className="module-nav">
+              {modules.map((module) => (
+                <button
+                  key={module._id}
+                  className={`module-nav-item ${
+                    selectedModule?._id === module._id ? "is-active" : ""
+                  }`}
+                  onClick={() => setSelectedModuleId(module._id)}
+                >
+                  <span className={dotClass(module.status)} />
+                  <span className="module-nav-label">
+                    {module.order}. {module.title}
+                  </span>
+                </button>
+              ))}
+            </nav>
 
-            {module.summary && (
-              <p className="module-card-summary">{module.summary}</p>
-            )}
+            {/* Right: selected module detail */}
+            {selectedModule && (
+              <div className="module-card module-card-selected">
+                <div className="module-card-header">
+                  <h3 className="module-card-title">
+                    {selectedModule.order}. {selectedModule.title}
+                  </h3>
+                  <span className={statusClass(selectedModule.status)}>
+                    {STATUS_LABELS[selectedModule.status] || selectedModule.status}
+                  </span>
+                </div>
 
-            {module.examples?.length > 0 && (
-              <div className="module-card-section">
-                <p className="detail-field-label">Examples</p>
-                <ul>
-                  {module.examples.map((ex, i) => (
-                    <li key={i}>{ex}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                {selectedModule.summary && (
+                  <p className="module-card-summary">{selectedModule.summary}</p>
+                )}
 
-            {module.knowledgeChecks?.length > 0 && (
-              <div className="module-card-section">
-                <p className="detail-field-label">Knowledge check</p>
-                {module.knowledgeChecks.map((qa, i) => (
-                  <div key={i} className="knowledge-check">
-                    <p className="knowledge-check-question">Q: {qa.question}</p>
-                    <p className="knowledge-check-answer">A: {qa.answer}</p>
+                {selectedModule.examples?.length > 0 && (
+                  <div className="module-card-section">
+                    <p className="detail-field-label">Examples</p>
+                    <ul>
+                      {selectedModule.examples.map((ex, i) => (
+                        <li key={i}>{ex}</li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              </div>
-            )}
+                )}
 
-            {module.status !== "APPROVED" && (
-              <button
-                className="btn-secondary"
-                onClick={() => handleApproveModule(module._id)}
-                disabled={busyModuleId === module._id}
-              >
-                {busyModuleId === module._id ? "Approving…" : "Approve module"}
-              </button>
+                {selectedModule.knowledgeChecks?.length > 0 && (
+                  <div className="module-card-section">
+                    <p className="detail-field-label">Knowledge check</p>
+                    {selectedModule.knowledgeChecks.map((qa, i) => (
+                      <div key={i} className="knowledge-check">
+                        <p className="knowledge-check-question">Q: {qa.question}</p>
+                        <p className="knowledge-check-answer">A: {qa.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedModule.status !== "APPROVED" && (
+                  <button
+                    className="btn-secondary"
+                    onClick={() => handleApproveModule(selectedModule._id)}
+                    disabled={busyModuleId === selectedModule._id}
+                  >
+                    {busyModuleId === selectedModule._id
+                      ? "Approving…"
+                      : "Approve module"}
+                  </button>
+                )}
+              </div>
             )}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* ---------- Core palette ---------- */
+  /* Warm parchment paper, ink-blue accent (fountain pen, not terracotta),
+     pine-green for approved/success, brick-red for errors, warm slate for
+     neutral/draft states. */
+
+  --paper: #f1ece0;        /* page background — warm parchment */
+  --card: #faf7f0;         /* card surface — lifted paper */
+  --ink: #2a2420;          /* primary text — warm near-black */
+  --ink-soft: #6b6459;     /* secondary text */
+  --ink-faint: #a69c8a;    /* tertiary text, placeholders, eyebrow labels */
+
+  --line: #ded5c2;         /* hairline borders */
+  --line-strong: #c9bea8;  /* emphasized borders, dividers */
+
+  /* Accent — ink blue (primary actions, links, processing state) */
+  --accent: #35507c;
+  --accent-ink: #24395c;
+  --accent-wash: #e4eaf1;
+
+  /* Teal — pine green (approved / success state) */
+  --teal: #3e6b52;
+  --teal-ink: #2c4e3b;
+  --teal-wash: #e4ede6;
+
+  /* Brick — muted red (errors / failed state) */
+  --brick: #9e3b32;
+  --brick-ink: #7a2c25;
+  --brick-wash: #f1e1dd;
+
+  /* Slate — warm grey (neutral / draft state) */
+  --slate-ink: #4a4438;
+  --slate-wash: #e8e3d8;
+
+  /* ---------- Type ---------- */
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  /* ---------- Shape ---------- */
+  --radius: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Visible keyboard focus everywhere — accessibility floor, not decoration */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

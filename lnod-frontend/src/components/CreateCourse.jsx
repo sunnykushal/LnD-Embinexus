@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createCourse } from "../api/coursesApi";
+import { createCourse, fetchCourseById } from "../api/coursesApi";
+import { GenerationProgress, CourseGeneratedSummary } from "./GenerationProgress";
 
 const AUDIENCE_OPTIONS = [
   { value: "BEGINNER", label: "Beginner" },
@@ -13,6 +14,11 @@ const SOURCE_OPTIONS = [
   { value: "TEXT", label: "Paste content" },
 ];
 
+// Screen states within this component
+const STAGE_FORM = "form";
+const STAGE_GENERATING = "generating";
+const STAGE_GENERATED = "generated";
+
 export default function CreateCourse({ onCancel, onCreated }) {
   const [courseTitle, setCourseTitle] = useState("");
   const [targetAudience, setTargetAudience] = useState("BEGINNER");
@@ -22,7 +28,9 @@ export default function CreateCourse({ onCancel, onCreated }) {
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  const [stage, setStage] = useState(STAGE_FORM);
+  const [generatedCourse, setGeneratedCourse] = useState(null);
 
   function switchSourceType(value) {
     setSourceType(value);
@@ -57,21 +65,40 @@ export default function CreateCourse({ onCancel, onCreated }) {
       return;
     }
 
-    setSubmitting(true);
+    setStage(STAGE_GENERATING);
+
     try {
-      const course = await createCourse({
+      // Step 1: POST — kicks off text/PDF extraction + the Ollama call on the backend
+      const created = await createCourse({
         courseTitle: courseTitle.trim(),
         targetAudience,
         sourceType,
         content,
         file,
       });
-      onCreated(course);
+
+      // Step 2: GET the full record — POST's response is a thin summary with no modules
+      const fullCourse = await fetchCourseById(created.courseId);
+
+      setGeneratedCourse(fullCourse);
+      setStage(STAGE_GENERATED);
     } catch (err) {
       setSubmitError(err.message);
-    } finally {
-      setSubmitting(false);
+      setStage(STAGE_FORM);
     }
+  }
+
+  if (stage === STAGE_GENERATING) {
+    return <GenerationProgress active={true} />;
+  }
+
+  if (stage === STAGE_GENERATED && generatedCourse) {
+    return (
+      <CourseGeneratedSummary
+        course={generatedCourse}
+        onReview={() => onCreated(generatedCourse)}
+      />
+    );
   }
 
   return (
@@ -197,15 +224,10 @@ export default function CreateCourse({ onCancel, onCreated }) {
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? "Generating…" : "Generate course"}
+          <button type="submit" className="btn-primary">
+            Generate course
           </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={onCancel}
-            disabled={submitting}
-          >
+          <button type="button" className="btn-secondary" onClick={onCancel}>
             Cancel
           </button>
         </div>

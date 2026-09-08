@@ -27,8 +27,10 @@ function App() {
   }
 
   function handleCourseCreated(course) {
-    setJustCreated(course);
-    setView("dashboard");
+    // "Review course" on the generated-summary screen lands straight on
+    // CourseView now, instead of bouncing back to the dashboard first.
+    setSelectedCourse(course);
+    setView("course");
   }
 
   const activeNavKey = view === "course" ? "projects" : view;
