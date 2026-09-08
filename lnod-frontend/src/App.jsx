@@ -6,7 +6,7 @@ import "./App.css";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard" },
-  { key: "projects", label: "My Projects" },
+  { key: "publishedCourses", label: "Published Courses" },
   { key: "create", label: "Create Course" },
 ];
 
@@ -33,7 +33,7 @@ function App() {
     setView("course");
   }
 
-  const activeNavKey = view === "course" ? "projects" : view;
+  const activeNavKey = view === "course" ? "publishedCourses" : view;
 
   return (
     <div className="app-shell">
@@ -70,7 +70,7 @@ function App() {
             />
           )}
 
-          {view === "projects" && (
+          {view === "publishedCourses" && (
             <DashboardOverview mode="all" onOpenCourse={openCourse} />
           )}
 
@@ -84,7 +84,7 @@ function App() {
           {view === "course" && selectedCourse && (
             <CourseView
               course={selectedCourse}
-              onBack={() => goTo("projects")}
+              onBack={() => goTo("publishedCourses")}
             />
           )}
         </main>
