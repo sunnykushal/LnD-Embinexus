@@ -78,6 +78,7 @@ function App() {
             <CreateCourse
               onCancel={() => goTo("dashboard")}
               onCreated={handleCourseCreated}
+              onFinishedDashboard={() => goTo("dashboard")}
             />
           )}
 

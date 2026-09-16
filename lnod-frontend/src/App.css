@@ -684,6 +684,24 @@
   margin: 0;
 }
 
+.finish-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.finish-action .field-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.generated-finish-action {
+  margin-top: 16px;
+}
+
 .generated-course-title {
   font-size: 15px;
   color: var(--ink-soft);
@@ -769,4 +787,58 @@
 
 .module-card-selected {
   margin-top: 0;
+}
+
+.course-settings {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+
+.course-settings .field-group,
+.module-editor .field-group {
+  margin-bottom: 16px;
+}
+
+.objectives-textarea {
+  min-height: 110px;
+}
+
+.compact-textarea {
+  min-height: 90px;
+}
+
+.module-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.module-editor > button {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: 170px;
+  }
+
+  .topbar {
+    padding-right: 20px;
+  }
+
+  .app-main {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .course-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .module-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 12px;
+  }
 }

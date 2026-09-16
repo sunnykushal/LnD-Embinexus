@@ -34,7 +34,11 @@ function useFakeProgress(active) {
   return { stepIndex, percent: Math.min(Math.round(percent), 90) };
 }
 
-export function GenerationProgress({ active }) {
+export function GenerationProgress({
+  active,
+  finishAction,
+  onFinishActionChange,
+}) {
   const { stepIndex, percent } = useFakeProgress(active);
 
   return (
@@ -69,11 +73,28 @@ export function GenerationProgress({ active }) {
       <p className="progress-hint">
         Running locally on llama3 — this typically takes 30–90 seconds.
       </p>
+
+      <label className="finish-action">
+        <span>When finished:</span>
+        <select
+          className="field-select"
+          value={finishAction}
+          onChange={(event) => onFinishActionChange(event.target.value)}
+        >
+          <option value="editor">Open course editor</option>
+          <option value="dashboard">Go to dashboard</option>
+        </select>
+      </label>
     </div>
   );
 }
 
-export function CourseGeneratedSummary({ course, onReview }) {
+export function CourseGeneratedSummary({
+  course,
+  finishAction,
+  onFinishActionChange,
+  onReview,
+}) {
   const modules = course.modules || [];
   const objectiveCount = course.learningObjectives?.length || 0;
   const exampleCount = modules.reduce(
@@ -106,8 +127,19 @@ export function CourseGeneratedSummary({ course, onReview }) {
       </ul>
 
       <button className="btn-primary" onClick={onReview}>
-        Review course
+        {finishAction === "dashboard" ? "Go to dashboard" : "Open course editor"}
       </button>
+      <label className="finish-action generated-finish-action">
+        <span>When finished:</span>
+        <select
+          className="field-select"
+          value={finishAction}
+          onChange={(event) => onFinishActionChange(event.target.value)}
+        >
+          <option value="editor">Open course editor</option>
+          <option value="dashboard">Go to dashboard</option>
+        </select>
+      </label>
     </div>
   );
 }

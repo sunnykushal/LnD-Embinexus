@@ -19,7 +19,11 @@ const STAGE_FORM = "form";
 const STAGE_GENERATING = "generating";
 const STAGE_GENERATED = "generated";
 
-export default function CreateCourse({ onCancel, onCreated }) {
+export default function CreateCourse({
+  onCancel,
+  onCreated,
+  onFinishedDashboard,
+}) {
   const [courseTitle, setCourseTitle] = useState("");
   const [targetAudience, setTargetAudience] = useState("BEGINNER");
   const [sourceType, setSourceType] = useState("TEXT");
@@ -31,6 +35,7 @@ export default function CreateCourse({ onCancel, onCreated }) {
 
   const [stage, setStage] = useState(STAGE_FORM);
   const [generatedCourse, setGeneratedCourse] = useState(null);
+  const [finishAction, setFinishAction] = useState("editor");
 
   function switchSourceType(value) {
     setSourceType(value);
@@ -89,14 +94,26 @@ export default function CreateCourse({ onCancel, onCreated }) {
   }
 
   if (stage === STAGE_GENERATING) {
-    return <GenerationProgress active={true} />;
+    return (
+      <GenerationProgress
+        active={true}
+        finishAction={finishAction}
+        onFinishActionChange={setFinishAction}
+      />
+    );
   }
 
   if (stage === STAGE_GENERATED && generatedCourse) {
     return (
       <CourseGeneratedSummary
         course={generatedCourse}
-        onReview={() => onCreated(generatedCourse)}
+        finishAction={finishAction}
+        onFinishActionChange={setFinishAction}
+        onReview={() =>
+          finishAction === "dashboard"
+            ? onFinishedDashboard()
+            : onCreated(generatedCourse)
+        }
       />
     );
   }
