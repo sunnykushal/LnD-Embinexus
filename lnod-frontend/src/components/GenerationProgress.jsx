@@ -53,8 +53,8 @@ export function GenerationProgress({
               i < stepIndex
                 ? "progress-step is-done"
                 : i === stepIndex
-                ? "progress-step is-active"
-                : "progress-step"
+                  ? "progress-step is-active"
+                  : "progress-step"
             }
           >
             <span className="progress-step-marker">
@@ -99,11 +99,11 @@ export function CourseGeneratedSummary({
   const objectiveCount = course.learningObjectives?.length || 0;
   const exampleCount = modules.reduce(
     (sum, m) => sum + (m.examples?.length || 0),
-    0
+    0,
   );
   const knowledgeCheckCount = modules.reduce(
     (sum, m) => sum + (m.knowledgeChecks?.length || 0),
-    0
+    0,
   );
 
   return (

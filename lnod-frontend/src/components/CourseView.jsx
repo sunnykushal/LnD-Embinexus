@@ -5,6 +5,7 @@ import {
   approveCourse,
   updateCourse,
   updateModule,
+  regenerateModule,
 } from "../api/coursesApi";
 
 const STATUS_LABELS = {
@@ -36,6 +37,7 @@ export default function CourseView({ course: initialCourse, onBack }) {
   const [busyCourse, setBusyCourse] = useState(false);
   const [savingCourse, setSavingCourse] = useState(false);
   const [savingModule, setSavingModule] = useState(false);
+  const [regeneratingModuleId, setRegeneratingModuleId] = useState(null);
   const [courseDraft, setCourseDraft] = useState({
     courseTitle: initialCourse.courseTitle,
     learningObjectives: (initialCourse.learningObjectives || []).join("\n"),
@@ -162,6 +164,24 @@ export default function CourseView({ course: initialCourse, onBack }) {
     }
   }
 
+  async function handleRegenerateModule(moduleId) {
+    const confirmed = window.confirm(
+      "Regenerate this module? The AI will re-research the source material and replace this module's title, summary, examples, and knowledge checks with new content. Any unsaved edits to this module will be lost."
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    setRegeneratingModuleId(moduleId);
+    try {
+      await regenerateModule(course._id, moduleId);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRegeneratingModuleId(null);
+    }
+  }
+
   return (
     <div>
       <button className="back-link" onClick={onBack}>
@@ -276,9 +296,25 @@ export default function CourseView({ course: initialCourse, onBack }) {
                       Module {selectedModule.order}
                     </h3>
                   </div>
-                  <span className={statusClass(selectedModule.status)}>
-                    {STATUS_LABELS[selectedModule.status] || selectedModule.status}
-                  </span>
+                  <div className="module-card-header-actions">
+                    <span className={statusClass(selectedModule.status)}>
+                      {STATUS_LABELS[selectedModule.status] ||
+                        selectedModule.status}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-secondary regenerate-btn"
+                      onClick={() =>
+                        handleRegenerateModule(selectedModule._id)
+                      }
+                      disabled={regeneratingModuleId === selectedModule._id}
+                      title="Re-research this module's content from the source material"
+                    >
+                      {regeneratingModuleId === selectedModule._id
+                        ? "Regenerating…"
+                        : "↻ Regenerate"}
+                    </button>
+                  </div>
                 </div>
 
                 <label className="field-group">
@@ -344,6 +380,11 @@ export default function CourseView({ course: initialCourse, onBack }) {
                 <button className="btn-secondary" disabled={savingModule}>
                   {savingModule ? "Saving module…" : "Save module"}
                 </button>
+
+                <p className="field-hint">
+                  Regenerated content replaces this module immediately and
+                  stays until you edit or regenerate it again.
+                </p>
 
                 {selectedModule.status !== "APPROVED" && (
                   <button

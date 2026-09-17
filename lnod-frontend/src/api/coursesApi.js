@@ -121,6 +121,23 @@ export async function approveModule(courseId, moduleId) {
   return response.json();
 }
 
+// PATCH /modules/:courseId/modules/:moduleId/regenerate
+// Re-runs the AI generation for just this module (using the course's stored
+// source text) and overwrites title/summary/examples/knowledgeChecks with the
+// freshly researched content. The module goes back to REVIEW status.
+export async function regenerateModule(courseId, moduleId) {
+  const response = await fetch(
+    `${API_BASE_URL}/modules/${courseId}/modules/${moduleId}/regenerate`,
+    { method: 'PATCH' }
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.json();
+}
+
 // DELETE /modules/courses/:courseId/modules/:moduleId
 // NOTE: the backend's `remove()` is currently a stub — it returns a message
 // string but doesn't actually delete anything from MongoDB yet. Flagging so
