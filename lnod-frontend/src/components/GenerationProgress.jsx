@@ -19,7 +19,7 @@ function useFakeProgress(active) {
 
     const stepTimer = setInterval(() => {
       setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
-    }, 12000); // roughly one step every 12s across a ~60-90s local llama3 call
+    }, 45000);
 
     const percentTimer = setInterval(() => {
       setPercent((p) => (p < 90 ? p + Math.random() * 4 : p));
@@ -71,7 +71,8 @@ export function GenerationProgress({
       <p className="progress-percent">{percent}%</p>
 
       <p className="progress-hint">
-        Running locally on llama3 — this typically takes 30–90 seconds.
+        Running locally on llama3 — CPU generation can take several minutes,
+        especially for PDFs or longer text.
       </p>
 
       <label className="finish-action">

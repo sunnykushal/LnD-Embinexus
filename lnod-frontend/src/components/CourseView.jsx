@@ -30,6 +30,51 @@ function formatAudience(audience) {
   return audience.charAt(0) + audience.slice(1).toLowerCase();
 }
 
+function linesFromText(value) {
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeAnswer(answer) {
+  return String(answer || "").trim();
+}
+
+function stableShuffle(items, seed) {
+  return [...items].sort((a, b) => {
+    const aScore = `${seed}:${a}`
+      .split("")
+      .reduce((total, char) => total + char.charCodeAt(0), 0);
+    const bScore = `${seed}:${b}`
+      .split("")
+      .reduce((total, char) => total + char.charCodeAt(0), 0);
+    return aScore - bScore;
+  });
+}
+
+function buildChoices(check, allChecks, seed) {
+  const correctAnswer = normalizeAnswer(check.answer);
+  const generatedOptions = Array.isArray(check.options)
+    ? check.options.map(normalizeAnswer).filter(Boolean)
+    : [];
+
+  if (generatedOptions.length > 0) {
+    return stableShuffle(
+      [...new Set([correctAnswer, ...generatedOptions].filter(Boolean))],
+      seed
+    );
+  }
+
+  const distractors = allChecks
+    .map((item) => normalizeAnswer(item.answer))
+    .filter((answer) => answer && answer !== correctAnswer)
+    .filter((answer, index, answers) => answers.indexOf(answer) === index)
+    .slice(0, 3);
+
+  return stableShuffle([correctAnswer, ...distractors], seed);
+}
+
 export default function CourseView({ course: initialCourse, onBack }) {
   const [course, setCourse] = useState(initialCourse);
   const [error, setError] = useState(null);
@@ -54,7 +99,14 @@ export default function CourseView({ course: initialCourse, onBack }) {
           summary: module.summary || "",
           examples: (module.examples || []).join("\n"),
           knowledgeChecks: (module.knowledgeChecks || [])
-            .map((item) => `${item.question} | ${item.answer}`)
+            .map((item) => {
+              const options = Array.isArray(item.options)
+                ? item.options.filter(Boolean).join("; ")
+                : "";
+              return options
+                ? `${item.question} | ${options} | ${item.answer}`
+                : `${item.question} | ${item.answer}`;
+            })
             .join("\n"),
         }
       : null;
@@ -65,12 +117,18 @@ export default function CourseView({ course: initialCourse, onBack }) {
   const [selectedModuleId, setSelectedModuleId] = useState(
     modules[0]?._id ?? null
   );
+  const [quizSelections, setQuizSelections] = useState({});
 
   const selectedModule =
     modules.find((m) => m._id === selectedModuleId) || modules[0] || null;
 
   const allModulesApproved =
     modules.length > 0 && modules.every((m) => m.status === "APPROVED");
+  const objectiveList = linesFromText(courseDraft.learningObjectives);
+  const selectedKnowledgeChecks = selectedModule?.knowledgeChecks || [];
+  const allKnowledgeChecks = modules.flatMap(
+    (module) => module.knowledgeChecks || []
+  );
 
   async function refresh() {
     try {
@@ -149,11 +207,22 @@ export default function CourseView({ course: initialCourse, onBack }) {
           .filter(Boolean),
         knowledgeChecks: moduleDraft.knowledgeChecks
           .split("\n")
-          .map((item) => item.split("|"))
-          .map(([question, answer]) => ({
-            question: question?.trim(),
-            answer: answer?.trim(),
-          }))
+          .map((item) => item.split("|").map((part) => part.trim()))
+          .map(([question, optionsOrAnswer, answer]) => {
+            const options = answer
+              ? optionsOrAnswer
+                  .split(";")
+                  .map((option) => option.trim())
+                  .filter(Boolean)
+              : [];
+            const finalAnswer = answer || optionsOrAnswer;
+
+            return {
+              question,
+              options: [...new Set([finalAnswer, ...options].filter(Boolean))],
+              answer: finalAnswer,
+            };
+          })
           .filter((item) => item.question && item.answer),
       });
       await refresh();
@@ -196,10 +265,10 @@ export default function CourseView({ course: initialCourse, onBack }) {
             <span className={statusClass(course.status)}>
               {STATUS_LABELS[course.status] || course.status}
             </span>
-            <h1 className="detail-title">Course editor</h1>
+            <h1 className="detail-title">{course.courseTitle}</h1>
             <p className="detail-subtitle">
-              {formatAudience(course.targetAudience)} audience · edit the
-              generated course before approving it
+              {formatAudience(course.targetAudience)} audience · review the
+              generated learning path before approving it
             </p>
           </div>
 
@@ -219,38 +288,66 @@ export default function CourseView({ course: initialCourse, onBack }) {
           )}
         </div>
 
-        <form className="course-settings" onSubmit={handleSaveCourse}>
-          <label className="field-group">
-            <span className="field-label">Course title</span>
-            <input
-              className="field-input"
-              value={courseDraft.courseTitle}
-              onChange={(event) =>
-                setCourseDraft((draft) => ({
-                  ...draft,
-                  courseTitle: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="field-group">
-            <span className="field-label">Learning objectives</span>
-            <textarea
-              className="field-textarea objectives-textarea"
-              value={courseDraft.learningObjectives}
-              onChange={(event) =>
-                setCourseDraft((draft) => ({
-                  ...draft,
-                  learningObjectives: event.target.value,
-                }))
-              }
-              placeholder="One objective per line"
-            />
-          </label>
-          <button className="btn-secondary" disabled={savingCourse}>
-            {savingCourse ? "Saving…" : "Save course details"}
-          </button>
-        </form>
+        <section className="course-overview-panel">
+          <div className="overview-copy">
+            <p className="detail-field-label">Learning path</p>
+            <h2>{courseDraft.courseTitle}</h2>
+            <p>
+              {modules.length} modules · {objectiveList.length} objectives ·{" "}
+              {allKnowledgeChecks.length} knowledge checks
+            </p>
+          </div>
+
+          {objectiveList.length > 0 && (
+            <div className="objectives-panel">
+              <p className="detail-field-label">Learning objectives</p>
+              <ul className="objective-list">
+                {objectiveList.map((objective, index) => (
+                  <li key={`${objective}-${index}`}>
+                    <span className="objective-number">{index + 1}</span>
+                    <span>{objective}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        <details className="editor-disclosure course-settings">
+          <summary>Edit course details</summary>
+          <form onSubmit={handleSaveCourse}>
+            <label className="field-group">
+              <span className="field-label">Course title</span>
+              <input
+                className="field-input"
+                value={courseDraft.courseTitle}
+                onChange={(event) =>
+                  setCourseDraft((draft) => ({
+                    ...draft,
+                    courseTitle: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label className="field-group">
+              <span className="field-label">Learning objectives</span>
+              <textarea
+                className="field-textarea objectives-textarea"
+                value={courseDraft.learningObjectives}
+                onChange={(event) =>
+                  setCourseDraft((draft) => ({
+                    ...draft,
+                    learningObjectives: event.target.value,
+                  }))
+                }
+                placeholder="One objective per line"
+              />
+            </label>
+            <button className="btn-secondary" disabled={savingCourse}>
+              {savingCourse ? "Saving…" : "Save course details"}
+            </button>
+          </form>
+        </details>
 
         {modules.length === 0 && (
           <div className="modules-empty">
@@ -317,69 +414,186 @@ export default function CourseView({ course: initialCourse, onBack }) {
                   </div>
                 </div>
 
-                <label className="field-group">
-                  <span className="field-label">Module title</span>
-                  <input
-                    className="field-input"
-                    value={moduleDraft?.title || ""}
-                    onChange={(event) =>
-                      setModuleDraft((draft) => ({
-                        ...draft,
-                        title: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
+                <section className="module-reading-panel">
+                  <div className="module-summary-block">
+                    <p className="detail-field-label">Module summary</p>
+                    <h4>{selectedModule.title}</h4>
+                    {selectedModule.summary && (
+                      <p>{selectedModule.summary}</p>
+                    )}
+                  </div>
 
-                <label className="field-group">
-                  <span className="field-label">Summary</span>
-                  <textarea
-                    className="field-textarea"
-                    value={moduleDraft?.summary || ""}
-                    onChange={(event) =>
-                      setModuleDraft((draft) => ({
-                        ...draft,
-                        summary: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
+                  {selectedModule.examples?.length > 0 && (
+                    <div className="module-content-block">
+                      <p className="detail-field-label">Examples</p>
+                      <ul className="example-list">
+                        {selectedModule.examples.map((example, index) => (
+                          <li key={`${example}-${index}`}>{example}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                <label className="field-group">
-                  <span className="field-label">Examples</span>
-                  <textarea
-                    className="field-textarea compact-textarea"
-                    value={moduleDraft?.examples || ""}
-                    onChange={(event) =>
-                      setModuleDraft((draft) => ({
-                        ...draft,
-                        examples: event.target.value,
-                      }))
-                    }
-                    placeholder="One example per line"
-                  />
-                </label>
+                  {selectedKnowledgeChecks.length > 0 && (
+                    <div className="module-content-block">
+                      <p className="detail-field-label">Knowledge check</p>
+                      <div className="quiz-list">
+                        {selectedKnowledgeChecks.map((check, index) => {
+                          const selectionKey = `${selectedModule._id}-${index}`;
+                          const selectedAnswer = quizSelections[selectionKey];
+                          const correctAnswer = normalizeAnswer(check.answer);
+                          const choices = buildChoices(
+                            check,
+                            allKnowledgeChecks,
+                            selectionKey
+                          );
+                          const hasMultipleChoices = choices.length > 1;
+                          const isCorrect = selectedAnswer === correctAnswer;
 
-                <label className="field-group">
-                  <span className="field-label">
-                    Knowledge checks
-                  </span>
-                  <textarea
-                    className="field-textarea compact-textarea"
-                    value={moduleDraft?.knowledgeChecks || ""}
-                    onChange={(event) =>
-                      setModuleDraft((draft) => ({
-                        ...draft,
-                        knowledgeChecks: event.target.value,
-                      }))
-                    }
-                    placeholder="Question | Answer (one per line)"
-                  />
-                </label>
+                          return (
+                            <article className="quiz-card" key={selectionKey}>
+                              <div className="quiz-question-row">
+                                <span className="quiz-number">{index + 1}</span>
+                                <h5>{check.question}</h5>
+                              </div>
 
-                <button className="btn-secondary" disabled={savingModule}>
-                  {savingModule ? "Saving module…" : "Save module"}
-                </button>
+                              {hasMultipleChoices ? (
+                                <div className="quiz-options">
+                                  {choices.map((choice) => {
+                                    const isSelected =
+                                      selectedAnswer === choice;
+                                    const shouldReveal = Boolean(selectedAnswer);
+                                    const optionClass = [
+                                      "quiz-option",
+                                      isSelected ? "is-selected" : "",
+                                      shouldReveal && choice === correctAnswer
+                                        ? "is-correct"
+                                        : "",
+                                      shouldReveal &&
+                                      isSelected &&
+                                      choice !== correctAnswer
+                                        ? "is-incorrect"
+                                        : "",
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ");
+
+                                    return (
+                                      <button
+                                        type="button"
+                                        className={optionClass}
+                                        key={choice}
+                                        onClick={() =>
+                                          setQuizSelections((selections) => ({
+                                            ...selections,
+                                            [selectionKey]: choice,
+                                          }))
+                                        }
+                                      >
+                                        {choice}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="quiz-option"
+                                  onClick={() =>
+                                    setQuizSelections((selections) => ({
+                                      ...selections,
+                                      [selectionKey]: correctAnswer,
+                                    }))
+                                  }
+                                >
+                                  Show answer
+                                </button>
+                              )}
+
+                              {selectedAnswer && (
+                                <div
+                                  className={`quiz-feedback ${
+                                    isCorrect ? "is-correct" : "is-incorrect"
+                                  }`}
+                                >
+                                  <strong>
+                                    {isCorrect ? "Correct" : "Not quite"}
+                                  </strong>
+                                  <span>Answer: {correctAnswer}</span>
+                                </div>
+                              )}
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </section>
+
+                <details className="editor-disclosure module-edit-disclosure">
+                  <summary>Edit module text</summary>
+                  <label className="field-group">
+                    <span className="field-label">Module title</span>
+                    <input
+                      className="field-input"
+                      value={moduleDraft?.title || ""}
+                      onChange={(event) =>
+                        setModuleDraft((draft) => ({
+                          ...draft,
+                          title: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="field-group">
+                    <span className="field-label">Summary</span>
+                    <textarea
+                      className="field-textarea"
+                      value={moduleDraft?.summary || ""}
+                      onChange={(event) =>
+                        setModuleDraft((draft) => ({
+                          ...draft,
+                          summary: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="field-group">
+                    <span className="field-label">Examples</span>
+                    <textarea
+                      className="field-textarea compact-textarea"
+                      value={moduleDraft?.examples || ""}
+                      onChange={(event) =>
+                        setModuleDraft((draft) => ({
+                          ...draft,
+                          examples: event.target.value,
+                        }))
+                      }
+                      placeholder="One example per line"
+                    />
+                  </label>
+
+                  <label className="field-group">
+                    <span className="field-label">Knowledge checks</span>
+                    <textarea
+                      className="field-textarea compact-textarea"
+                      value={moduleDraft?.knowledgeChecks || ""}
+                      onChange={(event) =>
+                        setModuleDraft((draft) => ({
+                          ...draft,
+                          knowledgeChecks: event.target.value,
+                        }))
+                      }
+                      placeholder="Question | Option A; Option B; Option C; Option D | Answer"
+                    />
+                  </label>
+
+                  <button className="btn-secondary" disabled={savingModule}>
+                    {savingModule ? "Saving module…" : "Save module"}
+                  </button>
+                </details>
 
                 <p className="field-hint">
                   Regenerated content replaces this module immediately and
