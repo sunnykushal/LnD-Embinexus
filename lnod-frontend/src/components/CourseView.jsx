@@ -7,6 +7,7 @@ import {
   updateModule,
   regenerateModule,
 } from "../api/coursesApi";
+import PresentationPreview from "./PresentationPreview";
 
 const STATUS_LABELS = {
   DRAFT: "Draft",
@@ -83,6 +84,7 @@ export default function CourseView({ course: initialCourse, onBack }) {
   const [savingCourse, setSavingCourse] = useState(false);
   const [savingModule, setSavingModule] = useState(false);
   const [regeneratingModuleId, setRegeneratingModuleId] = useState(null);
+  const [showPresentation, setShowPresentation] = useState(false);
   const [courseDraft, setCourseDraft] = useState({
     courseTitle: initialCourse.courseTitle,
     learningObjectives: (initialCourse.learningObjectives || []).join("\n"),
@@ -358,9 +360,10 @@ export default function CourseView({ course: initialCourse, onBack }) {
         )}
 
         {modules.length > 0 && (
-          <div className="course-editor-layout">
-            {/* Left: module list nav */}
-            <nav className="module-nav">
+          <>
+            <div className="course-editor-layout">
+              {/* Left: module list nav */}
+              <nav className="module-nav">
               {modules.map((module) => (
                 <button
                   key={module._id}
@@ -378,10 +381,10 @@ export default function CourseView({ course: initialCourse, onBack }) {
                   </span>
                 </button>
               ))}
-            </nav>
+              </nav>
 
-            {/* Right: selected module detail */}
-            {selectedModule && (
+              {/* Right: selected module detail */}
+              {selectedModule && (
               <form
                 className="module-card module-card-selected module-editor"
                 onSubmit={handleSaveModule}
@@ -613,10 +616,36 @@ export default function CourseView({ course: initialCourse, onBack }) {
                   </button>
                 )}
               </form>
-            )}
-          </div>
+              )}
+            </div>
+
+            <section className="presentation-cta">
+              <div>
+                <p className="detail-field-label">Presentation ready</p>
+                <h2>Turn this course into a polished slide deck</h2>
+                <p>
+                  Preview a structured presentation with learning objectives,
+                  module diagrams, practical examples, MCQs, and an answer key.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setShowPresentation(true)}
+              >
+                Preview &amp; download PowerPoint
+              </button>
+            </section>
+          </>
         )}
       </div>
+
+      {showPresentation && (
+        <PresentationPreview
+          course={course}
+          onClose={() => setShowPresentation(false)}
+        />
+      )}
     </div>
   );
 }
