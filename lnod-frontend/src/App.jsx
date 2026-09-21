@@ -39,6 +39,11 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
+          <img
+            src="/uploads/logo/learnai-studio-logo.svg"
+            alt="LearnAI Studio logo"
+            className="brand-logo"
+          />
           <span className="brand-mark">LearnAI Studio</span>
         </div>
 

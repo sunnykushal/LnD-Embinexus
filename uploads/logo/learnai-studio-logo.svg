@@ -1,0 +1,19 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F6FEB"/>
+      <stop offset="0.5" stop-color="#5A7CFF"/>
+      <stop offset="1" stop-color="#7C4DFF"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="31" y1="28" x2="94" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#EAF2FF" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="108" height="108" rx="28" fill="url(#bg)"/>
+  <path d="M41 34L64 49L87 34V58L64 78L41 58V34Z" fill="url(#shine)" opacity="0.9"/>
+  <path d="M45 42L64 54L83 42V56L64 70L45 56V42Z" fill="#F8FBFF" fill-opacity="0.15"/>
+  <path d="M58 51H70V73H58V51ZM54 54H48L41 74H48L54 54ZM80 54H74L81 74H88L80 54Z" fill="#F8FBFF"/>
+  <circle cx="90" cy="35" r="8" fill="#7EF2D6"/>
+  <path d="M90 26V23M90 47V44M81 35H78M102 35H99M83.5 28.5L81.5 26.5M98.5 43.5L100.5 45.5M83.5 41.5L81.5 43.5M98.5 26.5L100.5 24.5" stroke="#F5FFFB" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
